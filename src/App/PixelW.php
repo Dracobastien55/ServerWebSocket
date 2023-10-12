@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Service\DatabaseService;
 use Ratchet\ConnectionInterface;
 use Ratchet\MessageComponentInterface;
 
@@ -9,8 +10,11 @@ class PixelW implements MessageComponentInterface
 {
     protected $client;
 
+    protected $databaseService;
+
     public function __construct(){
         $this->client = new \SplObjectStorage();
+        $this->databaseService = new DatabaseService();
     }
 
     /**
@@ -21,7 +25,7 @@ class PixelW implements MessageComponentInterface
     {
         $this->client->attach($conn);
         echo "New connexion";
-        // TODO : Read in database for place the pixel was already created
+        $conn->send($this->databaseService->ReadQuery("SELECT * FROM grid"));
     }
 
     /**
@@ -38,7 +42,6 @@ class PixelW implements MessageComponentInterface
      */
     function onError(ConnectionInterface $conn, \Exception $e)
     {
-        // TODO: Implement onError() method.
         echo "An error has occured : {$e->getMessage()}\n";
     }
 
@@ -52,5 +55,10 @@ class PixelW implements MessageComponentInterface
            1 - Faire transiter les données des couleurs entre chaque client
            2 - Faire un enregistrement en base de donnée
         */
+
+        $this->databaseService->PersistData($msg);
+
+        $from->send($msg);
+
     }
 }
