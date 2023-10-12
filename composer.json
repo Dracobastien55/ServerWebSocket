@@ -1,0 +1,8 @@
+{
+    "name": "bastien/server-web-socket",
+    "description": "A web socket server",
+    "type": "project",
+    "require": {
+        "cboden/ratchet": "^0.4.4"
+    }
+}
