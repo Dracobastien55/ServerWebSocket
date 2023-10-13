@@ -19,7 +19,7 @@ class PixelRepository implements RepositoryInterface
     {
         $statement = $this->connexionPDO->query("SELECT * FROM grid");
         $rows = $statement->fetchAll(PDO::FETCH_CLASS, Pixel::class);
-        $pixelArray = array_map(function ($pixel) { return $pixel->toArray(); }, $rows);
+        $pixelArray['data'] = array_map(function ($pixel) { return $pixel->toArray(); }, $rows);
         $pixelArray['type'] = "GetAllData";
         return json_encode($pixelArray);
     }
@@ -27,9 +27,10 @@ class PixelRepository implements RepositoryInterface
     public function getByID(int $id): string
     {
         $statement = $this->connexionPDO->query("SELECT * FROM grid WHERE grid_id = {$id}");
-        $rows = $statement->fetchAll(PDO::FETCH_CLASS, Pixel::class);
-        $pixelArray = array_map(function ($pixel) { return $pixel->toArray(); }, $rows);
-        $pixelArray['type'] = "GetCurrentData";
+        $row = $statement->fetch(PDO::FETCH_ASSOC);
+        $pixel = new Pixel();
+        $pixel->fill($row);
+        $pixelArray = $pixel->toArray();
         return json_encode($pixelArray);
     }
 
@@ -39,24 +40,22 @@ class PixelRepository implements RepositoryInterface
         return $id;
     }
 
-    public function Save($data): void
+    public function save($data): void
     {
-        $decodeJson = json_decode($data,true);
-
-        $id = $decodeJson['grid_id'];
-        $user = $decodeJson['user_id'];
-        $x = $decodeJson['x_coordinate'];
-        $y = $decodeJson['y_coordinate'];
-        $color = $decodeJson['color'];
+        $x = $data['x_coordinate'];
+        $y = $data['y_coordinate'];
+        $color = $data['color'];
         $query = NULL;
 
-        $statement = $this->connexionPDO->query("SELECT COUNT(grid_id) FROM grid WHERE grid_id =".$data['grid_id']);
+        $id = $this->getByCoordinate($x, $y);
+
+        $statement = $this->connexionPDO->query("SELECT COUNT(grid_id) FROM grid WHERE grid_id =".$id);
         $singleValue = $statement->fetch(PDO::FETCH_COLUMN);
 
         if($singleValue == 0)
-            $query = "INSERT INTO grid (user_id, x_coordinate, y_coordinate, color) VALUES ({$user}, {$x}, {$y}, '{$color}')";
+            $query = "INSERT INTO grid (x_coordinate, y_coordinate, color) VALUES ({$x}, {$y}, '{$color}')";
         else
-            $query = "UPDATE grid SET user_id = {$user}, x_coordinate = {$x}, y_coordinate = {$y}, color = '{$color}' WHERE grid_id = {$id} AND user_id = {$user}";
+            $query = "UPDATE grid SET x_coordinate = {$x}, y_coordinate = {$y}, color = '{$color}' WHERE grid_id = {$id}";
 
         $this->connexionPDO->query($query);
     }

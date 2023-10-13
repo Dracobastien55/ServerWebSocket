@@ -17,5 +17,5 @@ interface RepositoryInterface
     /**
      * Method that will save in db the data (include insert or Update query)
      */
-    public function Save($data) : void;
+    public function save($data) : void;
 }
