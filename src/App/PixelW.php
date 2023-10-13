@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Repository\UserRepository;
 use App\Service\DatabaseService;
 use Ratchet\ConnectionInterface;
 use Ratchet\MessageComponentInterface;
@@ -21,18 +22,19 @@ class PixelW implements MessageComponentInterface
      * @inheritDoc
      * Event activated when a new connexion is made
      */
-    function onOpen(ConnectionInterface $conn)
+    function onOpen(ConnectionInterface $conn): void
     {
         $this->client->attach($conn);
-        echo "New connexion";
-        $conn->send($this->databaseService->ReadQuery("SELECT * FROM grid"));
+        $idClient = count($this->client) + 1;
+        $conn->send($idClient);
+        $conn->send($this->databaseService->getPixelRepository()->getAll());
     }
 
     /**
      * @inheritDoc
      * Event activated when a connexion is closed
      */
-    function onClose(ConnectionInterface $conn)
+    function onClose(ConnectionInterface $conn): void
     {
         $this->client->detach($conn);
     }
@@ -40,7 +42,7 @@ class PixelW implements MessageComponentInterface
     /**
      * @inheritDoc
      */
-    function onError(ConnectionInterface $conn, \Exception $e)
+    function onError(ConnectionInterface $conn, \Exception $e): void
     {
         echo "An error has occured : {$e->getMessage()}\n";
     }
@@ -48,17 +50,24 @@ class PixelW implements MessageComponentInterface
     /**
      * @inheritDoc
      */
-    function onMessage(ConnectionInterface $from, $msg)
+    function onMessage(ConnectionInterface $from, $msg): void
     {
-        // TODO: Implement onMessage() method.
-        /* TODO :
-           1 - Faire transiter les données des couleurs entre chaque client
-           2 - Faire un enregistrement en base de donnée
-        */
-
-        $this->databaseService->PersistData($msg);
+        echo "Voici le message reçue : ". $msg." \n";
+        $typeMsg = json_decode($msg);
+        echo "Voici le type message reçue : ".$typeMsg." \n";
+        switch ($typeMsg['type']){
+            case "CONNECTION":
+                $this->databaseService->getUserRepository()->Save($msg);
+                $jsonData = $this->databaseService->getPixelRepository()->getAll();
+                $from->send($jsonData);
+                break;
+            case "PIXEL":
+                $this->databaseService->getPixelRepository()->Save($msg);
+                $id = $this->databaseService->getPixelRepository()->getByCoordinate($typeMsg['x_coordinate'], $typeMsg['y_coordinate']);
+                $pixel = $this->databaseService->getPixelRepository()->getByID($id);
+                break;
+        }
 
         $from->send($msg);
-
     }
 }

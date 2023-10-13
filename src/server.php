@@ -1,6 +1,7 @@
 <?php
 
 require 'vendor/autoload.php';
+require 'App/PixelW.php';
 
 use App\PixelW;
 use Ratchet\Server\IoServer;

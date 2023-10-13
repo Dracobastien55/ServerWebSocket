@@ -3,37 +3,37 @@
 namespace tests;
 
 use App\Model\Pixel;
+use App\Model\User;
 use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
 use App\Service\DatabaseService;
 
 class DatabaseServiceTest extends TestCase
 {
-    public function testReadQuery()
+    public function testReadQueryPixel()
     {
         $db = new DatabaseService();
-        $data = $db->ReadQuery("SELECT * FROM grid");
+        $data = $db->getPixelRepository()->getAll();
+    }
+
+    public function testReadQueryUser(){
+        $db = new DatabaseService();
+        $data = $db->getUserRepository()->getAll();
     }
 
     public function testInsertQuery(){
-        $db = new DatabaseService();
         $db = new DatabaseService();
         $pixel = new Pixel();
         $pixel->setUserId(1);
         $pixel->setXCoordinate(250);
         $pixel->setYCoordinate(250);
         $pixel->setColor("AAAAAA");
-        $db->InsertQuery(json_encode($pixel->toArray()));
+        $db->getPixelRepository()->Save(json_encode($pixel->toArray()));
     }
 
-    public function testUpdateQuery(){
+    public function testInsertUserQuery(){
         $db = new DatabaseService();
-        $pixel = new Pixel();
-        $pixel->setId(1);
-        $pixel->setUserId(1);
-        $pixel->setXCoordinate(100);
-        $pixel->setYCoordinate(60);
-        $pixel->setColor("FF33FF");
-        $data = $db->UpdateQuery(json_encode($pixel->toArray()));
+        $user = new User(1,"Bastien");
+        $db->getUserRepository()->Save(json_encode($user->toArray()));
     }
 }
